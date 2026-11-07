@@ -46,28 +46,30 @@ async function gather(root, key) {
 }
 
 export async function POST(req) {
-  const { url } = await req.json().catch(() => ({}));
-  if (typeof url !== 'string' || url.length > 2000) return bad('Link inválido.');
+  const { url, lang: l0 } = await req.json().catch(() => ({}));
+  const lang = l0 === 'en' ? 'en' : 'pt';
+  const T = (pt, en) => (lang === 'en' ? en : pt);
+  if (typeof url !== 'string' || url.length > 2000) return bad(T('Link inválido.', 'Invalid link.'));
   const input = url.trim();
 
-  if (/^[\d.\/-]{14,18}$/.test(input)) return Response.json(await checkCNPJ(input));
+  if (/^[\d.\/-]{14,18}$/.test(input)) return Response.json(await checkCNPJ(input, lang));
 
   const parsed = cleanUrl(input);
-  if (!parsed) return bad('Link inválido.');
+  if (!parsed) return bad(T('Link inválido.', 'Invalid link.'));
   const key = process.env.FIRECRAWL_API_KEY;
-  if (!key) return bad('Serviço temporariamente indisponível.', 500);
+  if (!key) return bad(T('Serviço temporariamente indisponível.', 'Service temporarily unavailable.'), 500);
 
   const rootA = rootDomain(parsed.hostname);
   const [data, ctxA] = await Promise.all([
     scrape(parsed.href, key, ['markdown', 'links']),
     isGoogleAd(parsed) ? null : gather(rootA, key),
   ]);
-  if (!data) return bad('Não consegui abrir esse site. Ele pode estar fora do ar, o que também é um sinal.', 502);
+  if (!data) return bad(T('Não consegui abrir esse site. Ele pode estar fora do ar, o que também é um sinal.', 'Could not open this site. It may be offline, which is also a signal.'), 502);
 
   let final = parsed;
   try { final = new URL(data.metadata?.url || data.metadata?.sourceURL || parsed.href); } catch { /* mantém */ }
   if (isGoogleAd(parsed) && /(^|\.)google\./.test(final.hostname))
-    return bad('Esse é um link de anúncio do Google e não deu para descobrir o site de destino. Abra o anúncio, copie o endereço do site e cole aqui.', 422);
+    return bad(T('Esse é um link de anúncio do Google e não deu para descobrir o site de destino. Abra o anúncio, copie o endereço do site e cole aqui.', 'This is a Google ad link and the destination site could not be found. Open the ad, copy the site address and paste it here.'), 422);
 
   // Se o destino final é outro domínio (anúncio, encurtador), refaz as pesquisas para ele.
   const rootF = rootDomain(final.hostname);
@@ -87,8 +89,8 @@ export async function POST(req) {
     markdown += pages.map((p) => p?.markdown || '').join('\n');
   }
 
-  const result = await analyze(final.href, markdown, links, ctx);
+  const result = await analyze(final.href, markdown, links, { ...ctx, lang });
   const from = parsed.hostname.replace(/^www\./, '');
-  if (from !== result.host && !isGoogleAd(parsed) && rootDomain(from) !== rootDomain(result.host)) result.notice = `Você colou um link de ${from}. Analisamos o destino final: ${result.host}.`;
+  if (from !== result.host && !isGoogleAd(parsed) && rootDomain(from) !== rootDomain(result.host)) result.notice = T(`Você colou um link de ${from}. Analisamos o destino final: ${result.host}.`, `You pasted a link from ${from}. We analyzed the final destination: ${result.host}.`);
   return Response.json(result);
 }

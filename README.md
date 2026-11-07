@@ -4,6 +4,10 @@
 
 🔗 **Teste agora:** https://confirmacnpj.vercel.app
 
+> ⚡ Projeto rápido de demonstração criado no hackathon **Hack Brasil**. Disponível em português e inglês, com tema claro e escuro.
+>
+> 🇺🇸 *Quick demo project built for the Hack Brasil hackathon. Paste a Brazilian website or CNPJ (the 14-digit company tax ID) to check that the company exists, is active and owns the site.*
+
 ## O problema
 
 Todo dia, milhões de brasileiros compram, contratam e fecham negócio com empresas que nunca viram. Lojas que somem depois do pagamento, fornecedores com CNPJ baixado, empresas abertas na semana passada fingindo décadas de estrada. Conferir isso na Receita Federal é chato, e quase ninguém faz.
