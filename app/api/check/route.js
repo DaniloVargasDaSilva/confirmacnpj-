@@ -1,17 +1,48 @@
-import { analyze, checkCNPJ, cleanUrl, findCNPJs, isGoogleAd } from '../../../lib/analyze';
+import { analyze, checkCNPJ, cleanUrl, findCNPJs, isGoogleAd, rootDomain, brandOf } from '../../../lib/analyze';
 
 export const maxDuration = 60;
 const bad = (error, status = 400) => Response.json({ error }, { status });
+const FC = 'https://api.firecrawl.dev/v1';
 
-async function scrape(url, key, formats) {
+async function fc(path, key, body) {
   try {
-    const r = await fetch('https://api.firecrawl.dev/v1/scrape', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url, formats, onlyMainContent: false, mobile: false, waitFor: 2000 }),
-    });
-    return r.ok ? (await r.json()).data : null;
+    const r = await fetch(`${FC}/${path}`, { method: 'POST', headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    return r.ok ? await r.json() : null;
   } catch { return null; }
+}
+const scrape = async (url, key, formats) => (await fc('scrape', key, { url, formats, onlyMainContent: false, mobile: false, waitFor: 2000 }))?.data || null;
+const search = async (query, key) => (await fc('search', key, { query, limit: 5, country: 'br', lang: 'pt' }))?.data || [];
+
+// Registro.br (RDAP): CNPJ do titular de domínios .br
+async function rdapCnpj(root) {
+  if (!root.endsWith('.br')) return null;
+  try {
+    const r = await fetch(`https://rdap.registro.br/domain/${root}`, { headers: { Accept: 'application/rdap+json' }, signal: AbortSignal.timeout(6000) });
+    if (!r.ok) return null;
+    const ents = (await r.json()).entities || [];
+    const reg = ents.filter((e) => (e.roles || []).includes('registrant'));
+    return findCNPJs(JSON.stringify(reg.length ? reg : ents))[0] || null;
+  } catch { return null; }
+}
+
+// Três pesquisas no Firecrawl + registro do domínio, em paralelo.
+async function gather(root, key) {
+  const label = brandOf(root);
+  const [official, cnpjRes, reclame, rdap] = await Promise.all([
+    search(`${label} site oficial`, key),
+    search(`"${root}" CNPJ razão social`, key),
+    search(`${label} reclame aqui`, key),
+    rdapCnpj(root),
+  ]);
+  const host = (u) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return ''; } };
+  return {
+    rdapCnpj: rdap,
+    searchHits: {
+      official: official.slice(0, 3).some((r) => host(r.url) === root || host(r.url).endsWith(`.${root}`)),
+      reclameAqui: reclame.some((r) => host(r.url) === 'reclameaqui.com.br' && /\/empresa\//.test(r.url) && (r.url + (r.title || '')).toLowerCase().replace(/[^a-z0-9]/g, '').includes(label.replace(/[^a-z0-9]/g, ''))),
+      cnpjs: findCNPJs(cnpjRes.map((r) => `${r.title || ''} ${r.description || ''}`).join('\n')),
+    },
+  };
 }
 
 export async function POST(req) {
@@ -26,30 +57,38 @@ export async function POST(req) {
   const key = process.env.FIRECRAWL_API_KEY;
   if (!key) return bad('Serviço temporariamente indisponível.', 500);
 
-  const data = await scrape(parsed.href, key, ['markdown', 'links']);
+  const rootA = rootDomain(parsed.hostname);
+  const [data, ctxA] = await Promise.all([
+    scrape(parsed.href, key, ['markdown', 'links']),
+    isGoogleAd(parsed) ? null : gather(rootA, key),
+  ]);
   if (!data) return bad('Não consegui abrir esse site. Ele pode estar fora do ar, o que também é um sinal.', 502);
 
-  // Destino final depois de redirecionamentos (anúncios, encurtadores).
   let final = parsed;
   try { final = new URL(data.metadata?.url || data.metadata?.sourceURL || parsed.href); } catch { /* mantém */ }
   if (isGoogleAd(parsed) && /(^|\.)google\./.test(final.hostname))
     return bad('Esse é um link de anúncio do Google e não deu para descobrir o site de destino. Abra o anúncio, copie o endereço do site e cole aqui.', 422);
 
+  // Se o destino final é outro domínio (anúncio, encurtador), refaz as pesquisas para ele.
+  const rootF = rootDomain(final.hostname);
+  const ctx = ctxA && rootF === rootA ? ctxA : await gather(rootF, key);
+
   let markdown = `${data.metadata?.title || ''}\n${data.markdown || ''}`;
   const links = data.links || [];
 
-  // Sem CNPJ na página inicial? Procura em "Institucional", "Termos", "Contato"...
-  if (!findCNPJs(markdown).length) {
+  // Sem CNPJ no site nem no registro? Procura em "Institucional", "Termos", "Contato" do site e do domínio principal.
+  if (!findCNPJs(markdown).length && !ctx.rdapCnpj) {
     const extra = [...new Set(links.filter((l) => {
-      try { const x = new URL(l); return x.hostname === final.hostname && /(institucional|sobre|quem-somos|termos|privacidade|politica|contato|fale-conosco)/i.test(x.pathname); }
+      try { const x = new URL(l); return (x.hostname === rootF || x.hostname.endsWith(`.${rootF}`)) && /(institucional|sobre|quem-somos|termos|privacidade|politica|contato|fale-conosco)/i.test(x.pathname); }
       catch { return false; }
-    }))].slice(0, 2);
-    const pages = await Promise.all(extra.map((l) => scrape(l, key, ['markdown'])));
+    }))];
+    if (final.hostname !== rootF && final.hostname !== `www.${rootF}`) extra.unshift(`https://${rootF}/`);
+    const pages = await Promise.all(extra.slice(0, 3).map((l) => scrape(l, key, ['markdown'])));
     markdown += pages.map((p) => p?.markdown || '').join('\n');
   }
 
-  const result = await analyze(final.href, markdown, links);
+  const result = await analyze(final.href, markdown, links, ctx);
   const from = parsed.hostname.replace(/^www\./, '');
-  if (from !== result.host) result.notice = `Você colou um link de ${from}. Analisamos o destino final: ${result.host}.`;
+  if (from !== result.host && !isGoogleAd(parsed) && rootDomain(from) !== rootDomain(result.host)) result.notice = `Você colou um link de ${from}. Analisamos o destino final: ${result.host}.`;
   return Response.json(result);
 }

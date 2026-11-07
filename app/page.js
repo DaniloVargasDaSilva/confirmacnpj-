@@ -29,7 +29,7 @@ export default function Home() {
   }
 
   const lv = res && L[res.level];
-  const share = res && `✅ ConfirmaCNPJ: ${res.host} → ${lv.title} (confiança ${res.score}/100). Confira você também: https://confirmacnpj.vercel.app`;
+  const share = res && `✅ ConfirmaCNPJ: ${res.host} → ${res.title || lv.title} (confiança ${res.score}/100). Confira você também: https://confirmacnpj.vercel.app`;
 
   return (
     <main className="wrap">
@@ -61,7 +61,7 @@ export default function Home() {
             </div>
             <div>
               <span className="badge" style={{ background: res.unavailable ? '#242c4a' : lv.bg, color: res.unavailable ? '#98a2c8' : lv.color }}>
-                {res.unavailable ? 'Consulta indisponível' : lv.title}
+                {res.unavailable ? 'Consulta indisponível' : res.title || lv.title}
               </span>
               <h2>{res.company?.fantasia || res.company?.nome || res.host}</h2>
               <p>{res.host}</p>
@@ -98,7 +98,7 @@ export default function Home() {
 
       <div className="how">
         <div><b>1. Cole</b><span>O link do site ou o CNPJ da empresa.</span></div>
-        <div><b>2. Conferimos</b><span>Lemos o site e consultamos a Receita Federal.</span></div>
+        <div><b>2. Conferimos</b><span>Lemos o site, pesquisamos a marca e consultamos Receita e Registro.br.</span></div>
         <div><b>3. Decida</b><span>Veja se está ativa, há quanto tempo e os alertas.</span></div>
       </div>
       <footer>Dados públicos da Receita Federal. É um apoio à decisão: em negócios de valor alto, confira outras fontes. Hack Brasil.</footer>
