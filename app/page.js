@@ -20,6 +20,9 @@ const I18N = {
     foot: 'Dados públicos da Receita Federal. É um apoio à decisão: em negócios de valor alto, confira outras fontes.',
     foot2: 'Projeto rápido de demonstração criado no hackathon Hack Brasil. Código aberto (MIT).',
     repo: 'Ver código', theme: 'Tema', status: {},
+    credits: 'Créditos nesta hora', buy: 'Compre créditos', wop: 'WOP',
+    limitMsg: (m) => `Você usou seus 10 créditos desta hora. Novos créditos em cerca de ${m} min.`,
+    later: 'A compra de créditos será desenvolvida em outro momento: este é um projeto de demonstração de hackathon.', ok: 'Entendi', buyBtn: 'Comprar créditos',
   },
   en: {
     demo: '⚡ Quick demo project built for the Hack Brasil hackathon',
@@ -36,6 +39,9 @@ const I18N = {
     foot: 'Public data from Brazil’s Federal Revenue. A decision aid: for high-value deals, check other sources too.',
     foot2: 'Quick demo project created at the Hack Brasil hackathon. Open source (MIT).',
     repo: 'View code', theme: 'Theme',
+    credits: 'Credits this hour', buy: 'Buy credits', wop: 'WOP',
+    limitMsg: (m) => `You have used your 10 credits for this hour. New credits in about ${m} min.`,
+    later: 'Buying credits will be developed at a later time: this is a hackathon demo project.', ok: 'Got it', buyBtn: 'Buy credits',
     status: { ATIVA: 'ACTIVE', BAIXADA: 'CLOSED', SUSPENSA: 'SUSPENDED', INAPTA: 'INELIGIBLE', NULA: 'VOID' },
   },
 };
@@ -67,6 +73,8 @@ export default function Home() {
   const [res, setRes] = useState(null);
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
+  const [credits, setCredits] = useState(null);
+  const [limit, setLimit] = useState(false);
   const t = I18N[lang];
 
   useEffect(() => {
@@ -74,6 +82,12 @@ export default function Home() {
     setLang(saved === 'pt' || saved === 'en' ? saved : (navigator.language || 'pt').toLowerCase().startsWith('pt') ? 'pt' : 'en');
     setTheme(document.documentElement.dataset.theme || 'dark');
   }, []);
+  useEffect(() => {
+    if (!limit) return;
+    const esc = (e) => e.key === 'Escape' && setLimit(false);
+    window.addEventListener('keydown', esc);
+    return () => window.removeEventListener('keydown', esc);
+  }, [limit]);
   useEffect(() => { document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en'; }, [lang]);
 
   const pickLang = (l) => { setLang(l); store.set('lang', l); setRes(null); setErr(''); };
@@ -84,7 +98,9 @@ export default function Home() {
     try {
       const r = await fetch('/api/check', { method: 'POST', body: JSON.stringify({ url: value, lang }) });
       const j = await r.json();
-      r.ok ? setRes(j) : setErr(j.error);
+      if (j.credits) setCredits(j.credits);
+      if (r.status === 429) setLimit(true);
+      else r.ok ? setRes(j) : setErr(j.error);
     } catch { setErr(t.conn); }
     setLoading(false);
   }
@@ -122,6 +138,8 @@ export default function Home() {
       <div className="chips">{t.test}
         {EXAMPLES.map((e) => <button key={e} type="button" className="chip" onClick={() => { setUrl(e); check(e); }}>{e}</button>)}
       </div>
+
+      {credits && <div className="credits">🪙 {t.credits}: <b>{credits.remaining}/{credits.limit}</b></div>}
 
       {loading && <div className="spin">{t.loading}</div>}
       {err && <div className="err">{err}</div>}
@@ -172,6 +190,19 @@ export default function Home() {
             <button className="btn ghost" onClick={() => { setRes(null); setUrl(''); }}>{t.again}</button>
           </div>
         </section>
+      )}
+
+      {limit && (
+        <div className="overlay" onClick={() => setLimit(false)}>
+          <div className="modal" role="dialog" aria-modal="true" aria-labelledby="mt" onClick={(e) => e.stopPropagation()}>
+            <div className="coin">🪙</div>
+            <h3 id="mt">{t.buy} <span className="wop">{t.wop}</span></h3>
+            <p>{t.limitMsg(Math.max(1, Math.ceil(((credits?.resetAt || Date.now()) - Date.now()) / 60000)))}</p>
+            <p className="later">{t.later}</p>
+            <button className="btn buy" disabled>{t.buyBtn} · {t.wop}</button>
+            <button className="btn ghost" onClick={() => setLimit(false)} autoFocus>{t.ok}</button>
+          </div>
+        </div>
       )}
 
       <div className="how">{t.how.map(([b, s]) => <div key={b}><b>{b}</b><span>{s}</span></div>)}</div>

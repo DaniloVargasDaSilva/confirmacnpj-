@@ -1,3 +1,4 @@
+import { takeCredit, clientIp } from '../../../lib/ratelimit';
 import { analyze, checkCNPJ, cleanUrl, findCNPJs, isGoogleAd, rootDomain, brandOf } from '../../../lib/analyze';
 
 export const maxDuration = 60;
@@ -17,7 +18,7 @@ const search = async (query, key) => (await fc('search', key, { query, limit: 5,
 async function rdapCnpj(root) {
   if (!root.endsWith('.br')) return null;
   try {
-    const r = await fetch(`https://rdap.registro.br/domain/${root}`, { headers: { Accept: 'application/rdap+json' }, signal: AbortSignal.timeout(6000) });
+    const r = await fetch(`https://rdap.registro.br/domain/${encodeURIComponent(root)}`, { headers: { Accept: 'application/rdap+json' }, signal: AbortSignal.timeout(6000) });
     if (!r.ok) return null;
     const ents = (await r.json()).entities || [];
     const reg = ents.filter((e) => (e.roles || []).includes('registrant'));
@@ -52,10 +53,22 @@ export async function POST(req) {
   if (typeof url !== 'string' || url.length > 2000) return bad(T('Link inválido.', 'Invalid link.'));
   const input = url.trim();
 
-  if (/^[\d.\/-]{14,18}$/.test(input)) return Response.json(await checkCNPJ(input, lang));
+  const isCnpj = /^[\d.\/-]{14,18}$/.test(input);
+  const parsed = isCnpj ? null : cleanUrl(input);
+  if (!isCnpj && !parsed) return bad(T('Link inválido.', 'Invalid link.'));
 
-  const parsed = cleanUrl(input);
-  if (!parsed) return bad(T('Link inválido.', 'Invalid link.'));
+  // Limite: 10 créditos por hora por IP (1 consulta = 1 crédito).
+  const credit = takeCredit(clientIp(req));
+  const credits = { remaining: credit.remaining, limit: credit.limit, resetAt: credit.resetAt };
+  if (!credit.ok) {
+    const mins = Math.max(1, Math.ceil((credit.resetAt - Date.now()) / 60000));
+    return Response.json({ code: 'LIMIT', error: T('Você usou seus créditos desta hora.', 'You have used your credits for this hour.'), credits },
+      { status: 429, headers: { 'Retry-After': String(mins * 60) } });
+  }
+  const json = (obj, init) => Response.json({ ...obj, credits }, init);
+
+  if (isCnpj) return json(await checkCNPJ(input, lang));
+
   const key = process.env.FIRECRAWL_API_KEY;
   if (!key) return bad(T('Serviço temporariamente indisponível.', 'Service temporarily unavailable.'), 500);
 
@@ -92,5 +105,5 @@ export async function POST(req) {
   const result = await analyze(final.href, markdown, links, { ...ctx, lang });
   const from = parsed.hostname.replace(/^www\./, '');
   if (from !== result.host && !isGoogleAd(parsed) && rootDomain(from) !== rootDomain(result.host)) result.notice = T(`Você colou um link de ${from}. Analisamos o destino final: ${result.host}.`, `You pasted a link from ${from}. We analyzed the final destination: ${result.host}.`);
-  return Response.json(result);
+  return json(result);
 }
