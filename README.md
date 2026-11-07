@@ -1,57 +1,59 @@
 # ✅ ConfirmaCNPJ
 
-**Essa empresa existe de verdade?** Cole o link de um site ou um CNPJ e descubra em segundos.
+**Does this company really exist?** Paste a website link or a CNPJ and find out in seconds.
 
-🔗 **Teste agora:** https://confirmacnpj.vercel.app
+🔗 **Try it now:** https://confirmacnpj.vercel.app
 
-> ⚡ Projeto rápido de demonstração criado no hackathon **Hack Brasil**. Disponível em português e inglês, com tema claro e escuro.
->
-> 🇺🇸 *Quick demo project built for the Hack Brasil hackathon. Paste a Brazilian website or CNPJ (the 14-digit company tax ID) to check that the company exists, is active and owns the site.*
+> ⚡ A quick demo project built for the **Hack Brasil** hackathon. Available in Portuguese and English, with light and dark themes.
 
-## O problema
+## What is a CNPJ?
 
-Todo dia, milhões de brasileiros compram, contratam e fecham negócio com empresas que nunca viram. Lojas que somem depois do pagamento, fornecedores com CNPJ baixado, empresas abertas na semana passada fingindo décadas de estrada. Conferir isso na Receita Federal é chato, e quase ninguém faz.
+The **CNPJ** (*Cadastro Nacional da Pessoa Jurídica*) is Brazil's 14-digit company tax ID, issued by the Federal Revenue Service (*Receita Federal*). Every legally registered business in Brazil has one, and the record is public: legal name, status (active or closed), opening date and location.
 
-## A solução
+## The problem
 
-O ConfirmaCNPJ faz essa conferência por você:
+Every day, millions of Brazilians buy from, hire and do business with companies they have never seen. Shops that vanish after payment, suppliers with a closed CNPJ, companies opened last week and posing as long-established. Checking the Federal Revenue registry by hand is tedious, so almost nobody does it.
 
-1. Você cola o **link do site** ou digita o **CNPJ**.
-2. Se for um site, o app procura o CNPJ da empresa na própria página.
-3. Ele confirma se o CNPJ é válido, se a empresa está **ativa** e **há quanto tempo foi aberta**.
-4. Você recebe um resultado claro, com a razão social, a cidade e os motivos de cada alerta.
-5. Um toque e você avisa a família ou os amigos pelo WhatsApp.
+## The solution
 
-Nenhum cadastro, nenhuma instalação. Funciona no celular.
+ConfirmaCNPJ does that check for you:
 
-## Para quem é
+1. You paste a **website link** or type a **CNPJ**.
+2. For a website, the app looks for the company's CNPJ on the page and in the domain registration (Registro.br), and searches the web to see whether the site is the brand's official one.
+3. It confirms the CNPJ is valid, the company is **active**, and **how long ago it was opened**.
+4. You get a clear result with the legal name, city and the reason behind every warning.
+5. One tap shares the result on WhatsApp with family or friends.
 
-- **Consumidores** que querem comprar online sem medo.
-- **Pequenos negócios** que precisam checar fornecedores e clientes antes de fechar.
-- **Marketplaces, bancos e fintechs** que querem validar empresas em escala.
+No sign-up, no install. Works on mobile.
 
-## Impacto
+## Who it is for
 
-Confirmar quem está do outro lado antes de pagar evita prejuízo, protege quem tem menos acesso à informação e fortalece as empresas que trabalham direito.
+- **Consumers** who want to shop online with confidence.
+- **Small businesses** that need to vet suppliers and clients before closing a deal.
+- **Marketplaces, banks and fintechs** that want to validate companies at scale.
 
-## Modelo de negócio
+## Impact
 
-| Plano | Para quem | Como funciona |
+Knowing who is on the other side before paying prevents losses, protects people with less access to information, and strengthens the companies that do things right.
+
+## Business model
+
+| Plan | Who it is for | How it works |
 |---|---|---|
-| Gratuito | Consumidores | Algumas consultas por dia |
-| Pro | Autônomos e pequenas empresas | Consultas ilimitadas, histórico e alertas |
-| API | Marketplaces, bancos, fintechs | Cobrança por consulta, integrada ao sistema do cliente |
+| Free | Consumers | A few checks per day |
+| Pro | Freelancers and small businesses | Unlimited checks, history and alerts |
+| API | Marketplaces, banks, fintechs | Pay per check, integrated into the client's system |
 
-## Próximos passos
+## Next steps
 
-- Extensão de navegador que avisa na hora, enquanto você navega.
-- Monitoramento: aviso quando a situação de um CNPJ mudar.
-- Integração com antifraude de Pix e plataformas de venda.
+- Browser extension that warns you instantly while you browse.
+- Monitoring: get notified when a CNPJ's status changes.
+- Integration with Pix anti-fraud and sales platforms.
 
-## Sobre o projeto
+## About the project
 
-Criado no **Hack Brasil**. Usa dados públicos da Receita Federal e leitura automática de sites. O resultado é um apoio à decisão: confira também outras fontes antes de negócios de valor alto.
+Created at the **Hack Brasil** hackathon. It uses public data from the Brazilian Federal Revenue and automated website reading. The result is a decision aid: for high-value deals, check other sources too.
 
-## Licença
+## License
 
-Código aberto sob a licença [MIT](LICENSE): use, copie e modifique à vontade.
+Open source under the [MIT](LICENSE) license: use, copy and modify freely.
