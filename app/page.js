@@ -1,8 +1,16 @@
 'use client';
 import { useState } from 'react';
 
-const COLORS = { baixo: '#22c55e', medio: '#f59e0b', alto: '#ef4444' };
-const TITLES = { baixo: 'Empresa confirmada', medio: 'Confirmada, com alertas', alto: 'Não conseguimos confirmar' };
+const L = {
+  alto: { color: '#22c55e', title: 'Empresa confirmada', bg: '#0f2e1c' },
+  medio: { color: '#f59e0b', title: 'Confirmada, com ressalvas', bg: '#33260a' },
+  baixo: { color: '#ef4444', title: 'Não conseguimos confirmar', bg: '#33121a' },
+};
+const ICON = { good: ['✓', '#22c55e'], warn: ['!', '#f59e0b'], bad: ['✕', '#ef4444'] };
+const EXAMPLES = ['casasbahia.com.br', 'magazineluiza.com.br', '08.170.849/0001-15'];
+
+const fmtCNPJ = (c = '') => c.replace(/\D/g, '').replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+const fmtDate = (d = '') => (/^\d{4}-\d{2}-\d{2}/.test(d) ? d.slice(0, 10).split('-').reverse().join('/') : d);
 
 export default function Home() {
   const [url, setUrl] = useState('');
@@ -10,42 +18,90 @@ export default function Home() {
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(false);
 
-  async function check(e) {
-    e.preventDefault(); setLoading(true); setErr(''); setRes(null);
+  async function check(value = url) {
+    setLoading(true); setErr(''); setRes(null);
     try {
-      const r = await fetch('/api/check', { method: 'POST', body: JSON.stringify({ url }) });
+      const r = await fetch('/api/check', { method: 'POST', body: JSON.stringify({ url: value }) });
       const j = await r.json();
       r.ok ? setRes(j) : setErr(j.error);
-    } catch { setErr('Falha de conexão.'); }
+    } catch { setErr('Falha de conexão. Tente de novo.'); }
     setLoading(false);
   }
 
-  const share = res && `✅ ConfirmaCNPJ: ${res.host} → ${TITLES[res.level]} (risco ${res.score}/100). Confira você também: confirmacnpj.vercel.app`;
+  const lv = res && L[res.level];
+  const share = res && `✅ ConfirmaCNPJ: ${res.host} → ${lv.title} (confiança ${res.score}/100). Confira você também: https://confirmacnpj.vercel.app`;
 
   return (
-    <main style={{ maxWidth: 640, margin: '0 auto', padding: '48px 20px' }}>
-      <h1 style={{ fontSize: 40, margin: 0 }}>✅ ConfirmaCNPJ</h1>
-      <p style={{ color: '#aab', fontSize: 18 }}>Antes de comprar ou fechar negócio, confirme se a empresa existe. Cole o link do site ou o CNPJ.</p>
-      <form onSubmit={check} style={{ display: 'flex', gap: 8 }}>
-        <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="link do site ou CNPJ (00.000.000/0001-00)" required
-          style={{ flex: 1, padding: 14, borderRadius: 10, border: '1px solid #334', background: '#141a33', color: '#fff', fontSize: 16 }} />
-        <button disabled={loading} style={{ padding: '0 22px', borderRadius: 10, border: 0, background: '#6366f1', color: '#fff', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>
-          {loading ? 'Analisando…' : 'Verificar'}
-        </button>
+    <main className="wrap">
+      <div className="brand"><i>✓</i> ConfirmaCNPJ</div>
+      <h1>Essa empresa <span>existe de verdade?</span></h1>
+      <p className="sub">Cole o link do site ou o CNPJ e confirme na Receita Federal em segundos.</p>
+
+      <form className="search" onSubmit={(e) => { e.preventDefault(); check(); }}>
+        <input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="Site ou CNPJ (00.000.000/0001-00)" required aria-label="Site ou CNPJ" />
+        <button disabled={loading}>{loading ? 'Analisando…' : 'Verificar'}</button>
       </form>
-      {err && <p style={{ color: '#f87171' }}>{err}</p>}
+      <div className="chips">Teste:
+        {EXAMPLES.map((e) => <button key={e} type="button" className="chip" onClick={() => { setUrl(e); check(e); }}>{e}</button>)}
+      </div>
+
+      {loading && <div className="spin">Lendo o site e consultando a Receita…</div>}
+      {err && <div className="err">{err}</div>}
+
       {res && (
-        <section style={{ marginTop: 28, background: '#141a33', borderRadius: 16, padding: 24, border: `2px solid ${COLORS[res.level]}` }}>
-          {res.unavailable ? <h2>⚠️ Consulta indisponível</h2> : <><div style={{ fontSize: 56, fontWeight: 800, color: COLORS[res.level] }}>{res.score}<span style={{ fontSize: 20 }}>/100 de risco</span></div>
-          <h2 style={{ margin: '0 0 4px' }}>{TITLES[res.level]}</h2></>}
-          <p style={{ color: '#aab', marginTop: 0 }}>{res.host}</p>
-          {res.company && <p style={{ background: '#0b1020', padding: 12, borderRadius: 8, fontSize: 14 }}>🏢 {res.company.nome} · CNPJ {res.company.cnpj} · {res.company.situacao} · aberta em {res.company.abertura} · {res.company.municipio}/{res.company.uf}</p>}
-          {res.signals.length === 0 ? <p>Empresa ativa e sem sinais de alerta.</p> :
-            <ul style={{ paddingLeft: 18 }}>{res.signals.map((s) => <li key={s.label} style={{ marginBottom: 8 }}><b>{s.label}</b> <span style={{ color: '#f87171' }}>+{s.pts}</span><br /><span style={{ color: '#aab' }}>{s.detail}</span></li>)}</ul>}
-          <a href={`https://wa.me/?text=${encodeURIComponent(share)}`} target="_blank" rel="noreferrer" style={{ display: 'inline-block', marginTop: 8, background: '#22c55e', color: '#052', padding: '10px 16px', borderRadius: 10, fontWeight: 700, textDecoration: 'none' }}>Avisar no WhatsApp</a>
+        <section className="card" aria-live="polite">
+          <div className="head">
+            <div className="ring">
+              <svg width="112" height="112" viewBox="0 0 112 112">
+                <circle cx="56" cy="56" r="48" fill="none" stroke="#242c4a" strokeWidth="10" />
+                <circle cx="56" cy="56" r="48" fill="none" stroke={res.unavailable ? '#98a2c8' : lv.color} strokeWidth="10" strokeLinecap="round"
+                  strokeDasharray={`${(res.unavailable ? 0 : res.score) * 3.016} 302`} />
+              </svg>
+              <b>{res.unavailable ? '—' : res.score}</b>
+            </div>
+            <div>
+              <span className="badge" style={{ background: res.unavailable ? '#242c4a' : lv.bg, color: res.unavailable ? '#98a2c8' : lv.color }}>
+                {res.unavailable ? 'Consulta indisponível' : lv.title}
+              </span>
+              <h2>{res.company?.fantasia || res.company?.nome || res.host}</h2>
+              <p>{res.host}</p>
+            </div>
+          </div>
+
+          {res.notice && <div className="notice">{res.notice}</div>}
+
+          {res.company && (
+            <div className="company">
+              <div className="full"><small>Razão social</small><span>{res.company.nome}</span></div>
+              <div><small>CNPJ</small><span>{fmtCNPJ(res.company.cnpj)}</span></div>
+              <div><small>Situação</small><span style={{ color: res.company.situacao === 'ATIVA' ? '#22c55e' : '#ef4444' }}>{res.company.situacao}</span></div>
+              <div><small>Abertura</small><span>{fmtDate(res.company.abertura)}</span></div>
+              <div><small>Local</small><span>{res.company.municipio}/{res.company.uf}</span></div>
+            </div>
+          )}
+
+          <ul className="list">
+            {res.signals.map((s) => (
+              <li key={s.label} style={{ borderColor: ICON[s.type][1] }}>
+                <em style={{ color: ICON[s.type][1] }}>{ICON[s.type][0]}</em>
+                <div><b>{s.label}</b><small>{s.detail}</small></div>
+              </li>
+            ))}
+          </ul>
+
+          <div className="actions">
+            <a className="btn wa" target="_blank" rel="noreferrer" href={`https://wa.me/?text=${encodeURIComponent(share)}`}>Compartilhar no WhatsApp</a>
+            <button className="btn ghost" onClick={() => { setRes(null); setUrl(''); }}>Nova consulta</button>
+          </div>
         </section>
       )}
-      <footer style={{ marginTop: 48, color: '#778', fontSize: 13 }}>Dados da Receita Federal via BrasilAPI e leitura do site via Firecrawl. Hack Brasil.</footer>
+
+      <div className="how">
+        <div><b>1. Cole</b><span>O link do site ou o CNPJ da empresa.</span></div>
+        <div><b>2. Conferimos</b><span>Lemos o site e consultamos a Receita Federal.</span></div>
+        <div><b>3. Decida</b><span>Veja se está ativa, há quanto tempo e os alertas.</span></div>
+      </div>
+      <footer>Dados públicos da Receita Federal. É um apoio à decisão: em negócios de valor alto, confira outras fontes. Hack Brasil.</footer>
     </main>
   );
 }
