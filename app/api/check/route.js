@@ -4,6 +4,7 @@ export const maxDuration = 60;
 
 export async function POST(req) {
   const { url } = await req.json().catch(() => ({}));
+  if (typeof url !== 'string' || url.length > 2000) return Response.json({ error: 'Link inválido.' }, { status: 400 });
   if (/^[\d.\/-]{14,18}$/.test((url || '').trim())) return Response.json(await checkCNPJ(url));
   let parsed;
   try {
@@ -12,7 +13,7 @@ export async function POST(req) {
   } catch { return Response.json({ error: 'Link inválido.' }, { status: 400 }); }
 
   const key = process.env.FIRECRAWL_API_KEY;
-  if (!key) return Response.json({ error: 'FIRECRAWL_API_KEY não configurada.' }, { status: 500 });
+  if (!key) return Response.json({ error: 'Serviço temporariamente indisponível.' }, { status: 500 });
 
   const fc = await fetch('https://api.firecrawl.dev/v1/scrape', {
     method: 'POST',

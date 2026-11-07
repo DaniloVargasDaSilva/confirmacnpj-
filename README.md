@@ -1,21 +1,49 @@
 # ✅ ConfirmaCNPJ
 
-Cole o link de um site (ou um CNPJ) e confirme se a empresa existe, está ativa e há quanto tempo foi aberta.
+**Essa empresa existe de verdade?** Cole o link de um site ou um CNPJ e descubra em segundos.
 
-**Como funciona:** [Firecrawl](https://firecrawl.dev) lê a página → extrai CNPJ, urgência, descontos, contato e política de troca → valida o CNPJ e consulta a situação na [BrasilAPI](https://brasilapi.com.br) (grátis, sem chave) → devolve a nota.
+🔗 **Teste agora:** https://confirmacnpj.vercel.app
 
-**Stack:** Next.js (App Router), sem ORM, sem banco. Uma única env var: `FIRECRAWL_API_KEY`.
+## O problema
 
-## Rodar
-```bash
-cp .env.example .env.local   # coloque sua chave
-npm install && npm run dev
-```
+Todo dia, milhões de brasileiros compram, contratam e fecham negócio com empresas que nunca viram. Lojas que somem depois do pagamento, fornecedores com CNPJ baixado, empresas abertas na semana passada fingindo décadas de estrada. Conferir isso na Receita Federal é chato, e quase ninguém faz.
 
-## Deploy (Vercel)
-Importe o repo e adicione `FIRECRAWL_API_KEY`. Pronto.
+## A solução
+
+O ConfirmaCNPJ faz essa conferência por você:
+
+1. Você cola o **link do site** ou digita o **CNPJ**.
+2. Se for um site, o app procura o CNPJ da empresa na própria página.
+3. Ele confirma se o CNPJ é válido, se a empresa está **ativa** e **há quanto tempo foi aberta**.
+4. Você recebe um resultado claro, com a razão social, a cidade e os motivos de cada alerta.
+5. Um toque e você avisa a família ou os amigos pelo WhatsApp.
+
+Nenhum cadastro, nenhuma instalação. Funciona no celular.
+
+## Para quem é
+
+- **Consumidores** que querem comprar online sem medo.
+- **Pequenos negócios** que precisam checar fornecedores e clientes antes de fechar.
+- **Marketplaces, bancos e fintechs** que querem validar empresas em escala.
+
+## Impacto
+
+Confirmar quem está do outro lado antes de pagar evita prejuízo, protege quem tem menos acesso à informação e fortalece as empresas que trabalham direito.
 
 ## Modelo de negócio
-- **B2C:** grátis com limite diário; plano Pro com alertas e extensão de navegador.
-- **B2B:** API de risco para marketplaces, bancos (antifraude Pix), Procons e provedores de anúncios cobrada por consulta.
-- **Impacto:** o Brasil perde bilhões por ano em golpes de e-commerce; confirmar a empresa antes de pagar protege consumidores e pequenos negócios.
+
+| Plano | Para quem | Como funciona |
+|---|---|---|
+| Gratuito | Consumidores | Algumas consultas por dia |
+| Pro | Autônomos e pequenas empresas | Consultas ilimitadas, histórico e alertas |
+| API | Marketplaces, bancos, fintechs | Cobrança por consulta, integrada ao sistema do cliente |
+
+## Próximos passos
+
+- Extensão de navegador que avisa na hora, enquanto você navega.
+- Monitoramento: aviso quando a situação de um CNPJ mudar.
+- Integração com antifraude de Pix e plataformas de venda.
+
+## Sobre o projeto
+
+Criado no **Hack Brasil**. Usa dados públicos da Receita Federal e leitura automática de sites. O resultado é um apoio à decisão: confira também outras fontes antes de negócios de valor alto.
