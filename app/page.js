@@ -36,8 +36,8 @@ export default function Home() {
       {err && <p style={{ color: '#f87171' }}>{err}</p>}
       {res && (
         <section style={{ marginTop: 28, background: '#141a33', borderRadius: 16, padding: 24, border: `2px solid ${COLORS[res.level]}` }}>
-          <div style={{ fontSize: 56, fontWeight: 800, color: COLORS[res.level] }}>{res.score}<span style={{ fontSize: 20 }}>/100 de risco</span></div>
-          <h2 style={{ margin: '0 0 4px' }}>{TITLES[res.level]}</h2>
+          {res.unavailable ? <h2>⚠️ Consulta indisponível</h2> : <><div style={{ fontSize: 56, fontWeight: 800, color: COLORS[res.level] }}>{res.score}<span style={{ fontSize: 20 }}>/100 de risco</span></div>
+          <h2 style={{ margin: '0 0 4px' }}>{TITLES[res.level]}</h2></>}
           <p style={{ color: '#aab', marginTop: 0 }}>{res.host}</p>
           {res.company && <p style={{ background: '#0b1020', padding: 12, borderRadius: 8, fontSize: 14 }}>🏢 {res.company.nome} · CNPJ {res.company.cnpj} · {res.company.situacao} · aberta em {res.company.abertura} · {res.company.municipio}/{res.company.uf}</p>}
           {res.signals.length === 0 ? <p>Empresa ativa e sem sinais de alerta.</p> :
