@@ -47,3 +47,7 @@ Confirmar quem está do outro lado antes de pagar evita prejuízo, protege quem 
 ## Sobre o projeto
 
 Criado no **Hack Brasil**. Usa dados públicos da Receita Federal e leitura automática de sites. O resultado é um apoio à decisão: confira também outras fontes antes de negócios de valor alto.
+
+## Licença
+
+Código aberto sob a licença [MIT](LICENSE): use, copie e modifique à vontade.
