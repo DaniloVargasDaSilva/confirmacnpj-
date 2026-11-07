@@ -22,7 +22,6 @@ ConfirmaCNPJ does that check for you:
 2. For a website, the app looks for the company's CNPJ on the page and in the domain registration (Registro.br), and searches the web to see whether the site is the brand's official one.
 3. It confirms the CNPJ is valid, the company is **active**, and **how long ago it was opened**.
 4. You get a clear result with the legal name, city and the reason behind every warning.
-5. One tap shares the result on WhatsApp with family or friends.
 
 No sign-up, no install. Works on mobile.
 

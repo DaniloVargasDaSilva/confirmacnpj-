@@ -146,8 +146,6 @@ button { font: inherit; }
 
 .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 46px; padding: 0 18px; border-radius: 8px; font-weight: 650; font-size: 15px; text-decoration: none; cursor: pointer; border: 1.5px solid transparent; }
-.btn-share { background: #1F8F4E; color: #fff; }
-.btn-share:hover { filter: brightness(1.07); }
 .btn-quiet { background: none; color: var(--ink); border-color: var(--rule); }
 .btn-quiet:hover { border-color: var(--ink-3); }
 .btn-primary { background: var(--gov); color: var(--gov-ink); }

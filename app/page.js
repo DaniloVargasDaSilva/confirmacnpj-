@@ -27,8 +27,7 @@ const I18N = {
     trust: 'Confiança', of: 'de',
     checks: 'Verificações',
     sources: 'Fontes: Receita Federal (via BrasilAPI), Registro.br, buscas na web (Firecrawl) e Reclame Aqui.',
-    share: 'Compartilhar no WhatsApp', again: 'Nova consulta',
-    shareText: (h, v, s) => `ConfirmaCNPJ: ${h} — ${v} (confiança ${s}/100). Confira você também: https://confirmacnpj.vercel.app`,
+    again: 'Nova consulta',
     foot: 'Dados públicos da Receita Federal e do Registro.br. Use como apoio à decisão: em negócios de valor alto, confira outras fontes.',
     foot2: 'Demonstração feita em poucas horas no hackathon Hack Brasil. Código aberto sob licença MIT.',
     repo: 'Código no GitHub',
@@ -61,8 +60,7 @@ const I18N = {
     trust: 'Trust', of: 'of',
     checks: 'Checks',
     sources: 'Sources: Brazil’s Federal Revenue (via BrasilAPI), Registro.br, web searches (Firecrawl) and Reclame Aqui.',
-    share: 'Share on WhatsApp', again: 'New check',
-    shareText: (h, v, s) => `ConfirmaCNPJ: ${h} — ${v} (trust ${s}/100). Check yours: https://confirmacnpj.vercel.app`,
+    again: 'New check',
     foot: 'Public data from Brazil’s Federal Revenue and Registro.br. Use it as a decision aid: for high-value deals, check other sources too.',
     foot2: 'Demo built in a few hours at the Hack Brasil hackathon. Open source under the MIT license.',
     repo: 'Code on GitHub',
@@ -338,7 +336,6 @@ export default function Home() {
 
           {res && (
             <div className="actions">
-              <a className="btn btn-share" target="_blank" rel="noreferrer" href={`https://wa.me/?text=${encodeURIComponent(t.shareText(res.company?.fantasia || res.company?.nome || res.host, t.stamp[kind], res.score))}`}>{t.share}</a>
               <button type="button" className="btn btn-quiet" onClick={() => { setRes(null); setQ(''); document.getElementById('q')?.focus(); }}>{t.again}</button>
             </div>
           )}
